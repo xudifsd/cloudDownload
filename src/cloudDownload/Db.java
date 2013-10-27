@@ -170,19 +170,4 @@ public class Db {
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET hit = hit - 1 where hit > 0");
 		pst.executeUpdate();
 	}
-
-	public static void main(String[] args) throws SQLException {
-		State state = null;
-		if (args[1].equals("pending"))
-			state = State.pending;
-		else if (args[1].equals("downloading"))
-			state = State.downloading;
-		else if (args[1].equals("succeeded"))
-			state = State.succeeded;
-		else if (args[1].equals("failed"))
-			state = State.failed;
-		else
-			System.err.println("error");
-		changeState(Integer.valueOf(args[0]), state);
-	}
 }

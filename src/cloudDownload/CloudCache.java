@@ -1,23 +1,21 @@
 package cloudDownload;
 
 import java.io.File;
+
 import java.sql.SQLException;
 
 import static cloudDownload.Db.sumSize;
 import static cloudDownload.Utils.getMD5Checksum;
+import static cloudDownload.Utils.zipIt;
 
 public class CloudCache {
 	private long sizeThreshold;
 	private long actualSize;
+	private final static String uniqName = "this_must_be_uniq";
 
 	public CloudCache(long sizeThreshold) throws SQLException {
 		this.sizeThreshold = sizeThreshold;
 		actualSize = sumSize();
-	}
-
-	private File tarIt(File input) {
-		//TODO make a tar file from original one
-		return new File("/etc/passwd");//dummy
 	}
 
 	private void freeDisk(long sizeToFree) {
@@ -25,17 +23,20 @@ public class CloudCache {
 	}
 
 	public synchronized String copyToCC(File file) throws Exception {
-		// we don't update retrieve URL in db
-		if (file.isDirectory())
-			file = tarIt(file);
+		// we don't update retrieve URL in db, it's the job of Downloader
+		if (file.isDirectory()) {
+			zipIt(uniqName, file.getAbsolutePath());
+			file = new File(uniqName);
+		}
 
 		long size = file.length();
 		if (size + actualSize > sizeThreshold)
 			freeDisk(size - (sizeThreshold - actualSize));//only free necessary disk
 
 		String md5 = getMD5Checksum(file.getAbsolutePath());
-		File destFile = new File(md5);// TODO make sure move it to dest dir
-		file.renameTo(destFile);
+		File destFile = new File(Config.fileContainer + md5);
+		if (!file.renameTo(destFile))
+			throw new Exception("Something wrong when renaming");
 		return destFile.getName();
 	}
 }

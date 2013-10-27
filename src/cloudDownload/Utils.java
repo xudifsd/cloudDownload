@@ -2,6 +2,9 @@ package cloudDownload;
 
 import java.io.*;
 import java.security.MessageDigest;
+import java.sql.SQLException;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Utils {
 	private static byte[] createChecksum(String filename) throws Exception {
@@ -28,5 +31,28 @@ public class Utils {
 		for (int i = 0; i < b.length; i++)
 			result.append(Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1));
 		return result.toString();
+	}
+
+	public static void zipIt(String dest, String source) throws IOException, InterruptedException {
+		Process p = Runtime.getRuntime().exec("zip -r " + dest + " " + source);
+		p.waitFor();
+	}
+
+	public static void initSystem() throws Exception {
+		Db.initDb();
+
+		ScheduledThreadPoolExecutor stpe = new ScheduledThreadPoolExecutor(1);
+		stpe.scheduleAtFixedRate(new Runnable() {
+			public void run() {
+				try {
+					Db.penalizeHit();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}, 60*60, 60*60, TimeUnit.SECONDS);
+
+		//make sure system have zip command installed
+		Runtime.getRuntime().exec("zip");
 	}
 }
