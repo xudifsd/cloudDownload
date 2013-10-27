@@ -20,8 +20,8 @@ public class Db {
 			"CREATE TABLE IF NOT EXISTS " + tableName + " ("
 			+ "id INT NOT NULL AUTO_INCREMENT,"
 			+ "url VARCHAR(200) NOT NULL,"
-			+ "prograss INT(2) NOT NULL DEFAULT '0',"// 0~99
-			+ "state ENUM('pending', 'downloading', 'succeeded', 'failed') DEFAULT 'pending',"
+			+ "progress INT(2) NOT NULL DEFAULT '0',"// 0~99
+			+ "state ENUM('pending', 'downloading', 'succeeded', 'failed', 'removed') DEFAULT 'pending',"
 			+ "size BIGINT DEFAULT '0',"
 			+ "hit INT DEFAULT '0',"
 			+ "retrieveURL VARCHAR(40) DEFAULT '',"// should only contains filename
@@ -30,7 +30,7 @@ public class Db {
 	public static class Task {
 		public int id;
 		public String url;
-		public int prograss;
+		public int progress;
 		public String state;
 		public long size;
 		public int hit;
@@ -46,7 +46,7 @@ public class Db {
 			if (rs.next()) {
 				this.id = id;
 				this.url = rs.getString("url");
-				this.prograss = rs.getInt("prograss");
+				this.progress = rs.getInt("progress");
 				this.state = rs.getString("state");
 				this.size = rs.getLong("size");
 				this.hit = rs.getInt("hit");
@@ -56,7 +56,7 @@ public class Db {
 		}
 	}
 
-	private enum State {pending, downloading, succeeded, failed};
+	public enum State {pending, downloading, succeeded, failed, removed};
 
 	public static void initDb() throws SQLException {
 		Connection con = DriverManager.getConnection(initUrl, user, password);
@@ -92,11 +92,11 @@ public class Db {
 		}
 	}
 
-	public static void updatePrograss(int id, int prograss) throws SQLException {
+	public static void updateProgress(int id, int progress) throws SQLException {
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
 
-		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET prograss = ? where id = ?");
-		pst.setInt(1, prograss);
+		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET progress = ? where id = ?");
+		pst.setInt(1, progress);
 		pst.setInt(2, id);
 		pst.executeUpdate();
 	}
@@ -112,6 +112,15 @@ public class Db {
 
 	public static void startDownload(int id) throws SQLException {
 		changeState(id, State.downloading);
+	}
+
+	public static void setSize(int id, long size) throws SQLException {
+		Connection con = DriverManager.getConnection(dbUrl, user, password);
+
+		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET size = ? where id = ?");
+		pst.setLong(1, size);
+		pst.setInt(2, id);
+		pst.executeUpdate();
 	}
 
 	public static void finishDownload(int id, String retrieveUrl) throws SQLException {
@@ -140,6 +149,18 @@ public class Db {
 			return rs.getString("retrieveURL");
 		else
 			return null;
+	}
+
+	public static long sumSize() throws SQLException {
+		long result = 0;
+		Connection con = DriverManager.getConnection(dbUrl, user, password);
+
+		PreparedStatement pst = con.prepareStatement("SELECT size FROM " + tableName + " where size > 0");
+		ResultSet rs = pst.executeQuery();
+
+		while (rs.next())
+			result += rs.getLong("size");
+		return result;
 	}
 
 	public static void penalizeHit() throws SQLException {
