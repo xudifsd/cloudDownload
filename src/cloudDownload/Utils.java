@@ -29,11 +29,13 @@ public class Utils {
 		StringBuilder result = new StringBuilder(b.length);
 
 		for (int i = 0; i < b.length; i++)
-			result.append(Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1));
+			result.append(Integer.toString((b[i] & 0xff) + 0x100, 16)
+					.substring(1));
 		return result.toString();
 	}
 
-	public static void zipIt(String dest, String source) throws IOException, InterruptedException {
+	public static void zipIt(String dest, String source) throws IOException,
+			InterruptedException {
 		Process p = Runtime.getRuntime().exec("zip -r " + dest + " " + source);
 		p.waitFor();
 	}
@@ -50,9 +52,17 @@ public class Utils {
 					e.printStackTrace();
 				}
 			}
-		}, 60*60, 60*60, TimeUnit.SECONDS);
+		}, 60 * 60, 60 * 60, TimeUnit.SECONDS);
 
-		//make sure system have zip command installed
+		File theDir = new File(Config.fileContainer);
+		// if the directory does not exist, create it
+		if (!theDir.exists()) {
+			if (!theDir.mkdir())
+				throw new Exception("failed to create " + Config.fileContainer);
+		}
+
+		// make sure system have zip and wget command installed
 		Runtime.getRuntime().exec("zip");
+		Runtime.getRuntime().exec("axel");
 	}
 }

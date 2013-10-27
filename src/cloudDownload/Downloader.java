@@ -10,16 +10,16 @@ import static cloudDownload.Db.finishDownload;
 import cloudDownload.Db.State;
 
 public abstract class Downloader implements Runnable {
-	private int id;
-	private URI uri;
-	private CloudCache cc;
+	protected int id;
+	protected URI uri;
+	protected CloudCache cc;
 
 	public Downloader(int id, URI uri) {
 		this.id = id;
 		this.uri = uri;
 	}
 
-	public abstract File doDownload();// method should update progress periodically
+	public abstract File doDownload() throws Exception ;// method should update progress periodically
 
 	public void run() {
 		try {
