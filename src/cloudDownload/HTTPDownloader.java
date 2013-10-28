@@ -10,8 +10,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HTTPDownloader extends Downloader {
-	public HTTPDownloader(int id, URI uri) {
-		super(id, uri);
+	public HTTPDownloader(int id, URI uri, CloudCache cc) {
+		super(id, uri, cc);
 	}
 
 	@Override

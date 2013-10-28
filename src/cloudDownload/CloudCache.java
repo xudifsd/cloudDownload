@@ -1,12 +1,14 @@
 package cloudDownload;
 
 import java.io.File;
-
 import java.sql.SQLException;
+import java.util.Iterator;
+import java.util.List;
 
 import static cloudDownload.Db.sumSize;
 import static cloudDownload.Utils.getMD5Checksum;
 import static cloudDownload.Utils.zipIt;
+import cloudDownload.Db;
 
 public class CloudCache {
 	private long sizeThreshold;
@@ -18,8 +20,19 @@ public class CloudCache {
 		actualSize = sumSize();
 	}
 
-	private void freeDisk(long sizeToFree) {
-		//TODO use LFU algorithm to delete file from disk and empty size in Db
+	private void freeDisk(long sizeToFree) throws Exception {
+		// because freeDisk is only called from copyToCC, and it's synchronized
+		// so freeDisk is synchronized inherent
+		List<Db.RemovalInfo> listToRemove = Db.gatherRemovalInfo(sizeToFree);
+		Iterator<Db.RemovalInfo> it = listToRemove.iterator();
+
+		while (it.hasNext()) {
+			Db.RemovalInfo info = it.next();
+			Db.emptyTask(info.id);
+			File file = new File(Config.fileContainer + info.retrieveURL);
+			if (!file.delete())
+				throw new Exception("error when deleting " + Config.fileContainer + info.retrieveURL);
+		}
 	}
 
 	public synchronized String copyToCC(File file) throws Exception {

@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Db {
 	private final static String initUrl = "jdbc:mysql://localhost:3306";
@@ -54,6 +56,11 @@ public class Db {
 			} else
 				throw new SQLException("no task have id " + id);
 		}
+	}
+
+	public static class RemovalInfo {
+		public int id;
+		public String retrieveURL;
 	}
 
 	public enum State {pending, downloading, succeeded, failed, removed};
@@ -108,6 +115,34 @@ public class Db {
 		pst.setString(1, state.toString());
 		pst.setInt(2, id);
 		pst.executeUpdate();
+	}
+
+	public static void emptyTask(int id) throws SQLException {
+		Connection con = DriverManager.getConnection(dbUrl, user, password);
+
+		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET state = ?, size = 0, retrieveURL = '' where id = ?");
+		pst.setString(1, "removed");
+		pst.setInt(2, id);
+		pst.executeUpdate();
+	}
+
+	public static List<RemovalInfo> gatherRemovalInfo(long sizeToFree) throws SQLException {
+		LinkedList<RemovalInfo> result = new LinkedList<RemovalInfo>();
+		Connection con = DriverManager.getConnection(dbUrl, user, password);
+
+		PreparedStatement pst = con.prepareStatement("SELECT id, retrieveURL, size FROM " + tableName + " where "
+				+ "size > 0 && state = 'succeeded' && retrieveURL != ''");
+		ResultSet rs = pst.executeQuery();
+
+		long size = 0;
+		while (rs.next() && size < sizeToFree) {
+			RemovalInfo info = new RemovalInfo();
+			size += rs.getLong("size");
+			info.id = rs.getInt("id");
+			info.retrieveURL = rs.getString("retrieveURL");
+			result.add(info);
+		}
+		return result;
 	}
 
 	public static void startDownload(int id) throws SQLException {

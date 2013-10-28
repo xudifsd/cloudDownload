@@ -14,9 +14,10 @@ public abstract class Downloader implements Runnable {
 	protected URI uri;
 	protected CloudCache cc;
 
-	public Downloader(int id, URI uri) {
+	public Downloader(int id, URI uri, CloudCache cc) {
 		this.id = id;
 		this.uri = uri;
+		this.cc = cc;
 	}
 
 	public abstract File doDownload() throws Exception ;// method should update progress periodically
