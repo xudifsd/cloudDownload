@@ -63,6 +63,11 @@ public class Db {
 		public String retrieveURL;
 	}
 
+	public static class TaskInfo {
+		public int id;
+		public boolean isNew;
+	}
+
 	public enum State {pending, downloading, succeeded, failed, removed};
 
 	public static void initDb() throws SQLException {
@@ -78,7 +83,9 @@ public class Db {
 		return new Task(id);
 	}
 
-	public static synchronized int newTask(String taskUrl) throws SQLException {
+	public static synchronized TaskInfo newTask(String taskUrl) throws SQLException {
+		TaskInfo info = new TaskInfo();
+		info.isNew = false;
 		taskUrl = taskUrl.trim();
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
 
@@ -88,12 +95,14 @@ public class Db {
 			pst.setString(1, taskUrl);
 			ResultSet rs = pst.executeQuery();
 
-			if (rs.next())
-				return rs.getInt("id");
-			else {
+			if (rs.next()) {
+				info.id = rs.getInt("id");
+				return info;
+			} else {
 				PreparedStatement insert = con.prepareStatement("INSERT INTO " + tableName + "(url) VALUES(?)");
 				insert.setString(1, taskUrl);
 				insert.executeUpdate();
+				info.isNew = true;
 				continue;
 			}
 		}
