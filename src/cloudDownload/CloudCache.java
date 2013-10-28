@@ -15,6 +15,16 @@ public class CloudCache {
 	private long actualSize;
 	private final static String uniqName = "this_must_be_uniq";
 
+	public static class CopyInfo {
+		String retrieveUrl;
+		long size;
+
+		public CopyInfo(String retrieveUrl, long size) {
+			this.retrieveUrl = retrieveUrl;
+			this.size = size;
+		}
+	}
+
 	public CloudCache(long sizeThreshold) throws SQLException {
 		this.sizeThreshold = sizeThreshold;
 		actualSize = sumSize();
@@ -35,7 +45,7 @@ public class CloudCache {
 		}
 	}
 
-	public synchronized String copyToCC(File file) throws Exception {
+	public synchronized CopyInfo copyToCC(File file) throws Exception {
 		// we don't update retrieve URL in db, it's the job of Downloader
 		if (file.isDirectory()) {
 			zipIt(uniqName, file.getAbsolutePath());
@@ -47,9 +57,8 @@ public class CloudCache {
 			freeDisk(size - (sizeThreshold - actualSize));//only free necessary disk
 
 		String md5 = getMD5Checksum(file.getAbsolutePath());
-		File destFile = new File(Config.fileContainer + md5);
-		if (!file.renameTo(destFile))
-			throw new Exception("Something wrong when renaming");
-		return destFile.getName();
+
+		Utils.moveFile(file.getAbsolutePath(), Config.fileContainer + md5);
+		return new CopyInfo(md5, size);
 	}
 }

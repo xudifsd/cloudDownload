@@ -25,8 +25,10 @@ public class TaskDispatcher {
 			if (uri.getScheme().toLowerCase().equals("http")) {
 				this.pool.submit(new HTTPDownloader(info.id, uri, this.cc));
 				return info.id;
-			} else
+			} else {
+				Db.changeState(info.id, Db.State.failed);
 				throw new Exception("Unspported scheme");
+			}
 		} else
 			return info.id;
 	}

@@ -65,4 +65,29 @@ public class Utils {
 		Runtime.getRuntime().exec("zip");
 		Runtime.getRuntime().exec("axel");
 	}
+
+	public static void moveFile(String inPath, String outPath)
+			throws IOException {
+
+		InputStream in = null;
+		OutputStream out = null;
+
+		File oldFile = new File(inPath);
+		File newFile = new File(outPath);
+
+		in = new FileInputStream(oldFile);
+		out = new FileOutputStream(newFile);
+
+		byte[] moveBuff = new byte[1024];
+		int butesRead;
+
+		while ((butesRead = in.read(moveBuff)) > 0)
+			out.write(moveBuff, 0, butesRead);
+
+		in.close();
+		out.close();
+
+		oldFile.delete();
+
+	}
 }

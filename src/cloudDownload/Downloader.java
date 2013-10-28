@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import static cloudDownload.Db.startDownload;
 import static cloudDownload.Db.changeState;
 import static cloudDownload.Db.finishDownload;
+import cloudDownload.CloudCache.CopyInfo;
 import cloudDownload.Db.State;
 
 public abstract class Downloader implements Runnable {
@@ -26,9 +27,10 @@ public abstract class Downloader implements Runnable {
 		try {
 			startDownload(id);
 			File file = doDownload();
-			String retrieveUrl = cc.copyToCC(file);
-			finishDownload(id, retrieveUrl);
+			CopyInfo info = cc.copyToCC(file);
+			finishDownload(id, info.retrieveUrl, info.size);
 		} catch (Exception ex) {
+			ex.printStackTrace();
 			try {
 				changeState(id, State.failed);
 			} catch (SQLException e) {

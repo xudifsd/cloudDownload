@@ -18,6 +18,7 @@ public class Db {
 	private final static String password = "root";
 	private final static String createDb = "CREATE DATABASE IF NOT EXISTS " + dbName + ";";
 	private final static String useDb = "USE " + dbName + ";";
+	// TODO should add 'reason' column
 	private final static String createTable =
 			"CREATE TABLE IF NOT EXISTS " + tableName + " ("
 			+ "id INT NOT NULL AUTO_INCREMENT,"
@@ -37,25 +38,6 @@ public class Db {
 		public long size;
 		public int hit;
 		public String retrieveURL;
-
-		public Task(int id) throws SQLException {
-			Connection con = DriverManager.getConnection(dbUrl, user, password);
-
-			PreparedStatement pst = con.prepareStatement("SELECT * FROM " + tableName + " WHERE id = ?");
-			pst.setInt(1, id);
-			ResultSet rs = pst.executeQuery();
-
-			if (rs.next()) {
-				this.id = id;
-				this.url = rs.getString("url");
-				this.progress = rs.getInt("progress");
-				this.state = rs.getString("state");
-				this.size = rs.getLong("size");
-				this.hit = rs.getInt("hit");
-				this.retrieveURL = rs.getString("retrieveURL");
-			} else
-				throw new SQLException("no task have id " + id);
-		}
 	}
 
 	public static class RemovalInfo {
@@ -80,7 +62,25 @@ public class Db {
 	}
 
 	public static Task getTask(int id) throws SQLException {
-		return new Task(id);
+		Task result = new Task();
+		Connection con = DriverManager.getConnection(dbUrl, user, password);
+
+		PreparedStatement pst = con.prepareStatement("SELECT * FROM " + tableName + " WHERE id = ?");
+		pst.setInt(1, id);
+		ResultSet rs = pst.executeQuery();
+
+		if (rs.next()) {
+			result.id = id;
+			result.url = rs.getString("url");
+			result.progress = rs.getInt("progress");
+			result.state = rs.getString("state");
+			result.size = rs.getLong("size");
+			result.hit = rs.getInt("hit");
+			result.retrieveURL = rs.getString("retrieveURL");
+		} else
+			throw new SQLException("no task have id " + id);
+
+		return result;
 	}
 
 	public static synchronized TaskInfo newTask(String taskUrl) throws SQLException {
@@ -167,16 +167,18 @@ public class Db {
 		pst.executeUpdate();
 	}
 
-	public static void finishDownload(int id, String retrieveUrl) throws SQLException {
+	public static void finishDownload(int id, String retrieveUrl, long size) throws SQLException {
 		changeState(id, State.succeeded);
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
 
-		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET retrieveURL = ? where id = ?");
+		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET retrieveURL = ?, size = ? where id = ?");
 		pst.setString(1, retrieveUrl);
-		pst.setInt(2, id);
+		pst.setLong(2, size);
+		pst.setInt(3, id);
 		pst.executeUpdate();
 	}
 
+	// TODO we should treat removed state correctly
 	public static String retrieve(int id) throws SQLException {
 		// update hit and get retrieveURL
 		Connection con = DriverManager.getConnection(dbUrl, user, password);

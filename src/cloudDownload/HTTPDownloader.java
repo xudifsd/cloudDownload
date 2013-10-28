@@ -2,7 +2,6 @@ package cloudDownload;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.sql.SQLException;
@@ -15,8 +14,9 @@ public class HTTPDownloader extends Downloader {
 	}
 
 	@Override
-	public File doDownload() throws IOException {
+	public File doDownload() throws Exception {
 		File tmpFile = File.createTempFile("cloud", ".tmp", new File("."));
+		tmpFile.delete();
 		Process p = Runtime.getRuntime().exec(
 				"axel " + uri + " -o " + tmpFile.getAbsolutePath());
 
@@ -40,6 +40,9 @@ public class HTTPDownloader extends Downloader {
 				}
 			}
 		}
+		p.waitFor();
+		if (p.exitValue() != 0)
+			throw new Exception("HTTPDownload failed, URL is " + uri.toString());
 		return tmpFile;
 	}
 }
