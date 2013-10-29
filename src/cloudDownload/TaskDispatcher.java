@@ -26,7 +26,7 @@ public class TaskDispatcher {
 				this.pool.submit(new HTTPDownloader(info.id, uri, this.cc));
 				return info.id;
 			} else {
-				Db.changeState(info.id, Db.State.failed);
+				Db.changeState(info.id, Db.State.failed, "Unspported scheme");
 				throw new Exception("Unspported scheme");
 			}
 		} else

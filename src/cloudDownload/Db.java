@@ -25,6 +25,7 @@ public class Db {
 			+ "url VARCHAR(200) NOT NULL,"
 			+ "progress INT(2) NOT NULL DEFAULT '0',"// 0~99
 			+ "state ENUM('pending', 'downloading', 'succeeded', 'failed', 'removed') DEFAULT 'pending',"
+			+ "reason VARCHAR(100) DEFAULT ''"
 			+ "size BIGINT DEFAULT '0',"
 			+ "hit INT DEFAULT '0',"
 			+ "retrieveURL VARCHAR(40) DEFAULT '',"// should only contains filename
@@ -35,6 +36,7 @@ public class Db {
 		public String url;
 		public int progress;
 		public String state;
+		public String reason;
 		public long size;
 		public int hit;
 		public String retrieveURL;
@@ -74,6 +76,7 @@ public class Db {
 			result.url = rs.getString("url");
 			result.progress = rs.getInt("progress");
 			result.state = rs.getString("state");
+			result.reason = rs.getString("reason");
 			result.size = rs.getLong("size");
 			result.hit = rs.getInt("hit");
 			result.retrieveURL = rs.getString("retrieveURL");
@@ -123,12 +126,13 @@ public class Db {
 		pst.executeUpdate();
 	}
 
-	public static void changeState(int id, State state) throws SQLException {
+	public static void changeState(int id, State state, String reason) throws SQLException {
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
 
-		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET state = ? where id = ?");
+		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET state = ?, reason = ? where id = ?");
 		pst.setString(1, state.toString());
-		pst.setInt(2, id);
+		pst.setString(2, reason);
+		pst.setInt(3, id);
 		pst.executeUpdate();
 	}
 
@@ -161,11 +165,11 @@ public class Db {
 	}
 
 	public static void startDownload(int id) throws SQLException {
-		changeState(id, State.downloading);
+		changeState(id, State.downloading, "");
 	}
 
 	public static void finishDownload(int id, String retrieveUrl, long size) throws SQLException {
-		changeState(id, State.succeeded);
+		changeState(id, State.succeeded, "");
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET retrieveURL = ?, size = ? where id = ?");

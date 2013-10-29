@@ -32,7 +32,7 @@ public abstract class Downloader implements Runnable {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			try {
-				changeState(id, State.failed);
+				changeState(id, State.failed, ex.getMessage());
 			} catch (SQLException e) {
 				e.printStackTrace();
 			}
