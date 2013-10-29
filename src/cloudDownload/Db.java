@@ -91,12 +91,18 @@ public class Db {
 
 		while (true) {
 			// this is very inefficient, but very simple to understand
-			PreparedStatement pst = con.prepareStatement("SELECT id FROM " + tableName + " WHERE url = ?");
+			PreparedStatement pst = con.prepareStatement("SELECT id, state FROM " + tableName + " WHERE url = ?");
 			pst.setString(1, taskUrl);
 			ResultSet rs = pst.executeQuery();
 
 			if (rs.next()) {
 				info.id = rs.getInt("id");
+				if (rs.getString("state").equals("removed")) {
+					info.isNew = true;
+					PreparedStatement pst2 = con.prepareStatement("UPDATE " + tableName + " SET state = 'pending' where id = ?");
+					pst2.setInt(1, info.id);
+					pst2.executeUpdate();
+				}
 				return info;
 			} else {
 				PreparedStatement insert = con.prepareStatement("INSERT INTO " + tableName + "(url) VALUES(?)");
@@ -158,15 +164,6 @@ public class Db {
 		changeState(id, State.downloading);
 	}
 
-	public static void setSize(int id, long size) throws SQLException {
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
-
-		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET size = ? where id = ?");
-		pst.setLong(1, size);
-		pst.setInt(2, id);
-		pst.executeUpdate();
-	}
-
 	public static void finishDownload(int id, String retrieveUrl, long size) throws SQLException {
 		changeState(id, State.succeeded);
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
@@ -178,9 +175,8 @@ public class Db {
 		pst.executeUpdate();
 	}
 
-	// TODO we should treat removed state correctly
 	public static String retrieve(int id) throws SQLException {
-		// update hit and get retrieveURL
+		// update hit and get retrieveURL, return "" if removed
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET hit = hit + 1 where id = ?");
@@ -194,7 +190,7 @@ public class Db {
 		if (rs.next())
 			return rs.getString("retrieveURL");
 		else
-			return null;
+			return "";
 	}
 
 	public static long sumSize() throws SQLException {
