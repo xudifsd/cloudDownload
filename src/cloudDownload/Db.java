@@ -25,7 +25,7 @@ public class Db {
 			+ "url VARCHAR(200) NOT NULL,"
 			+ "progress INT(2) NOT NULL DEFAULT '0',"// 0~99
 			+ "state ENUM('pending', 'downloading', 'succeeded', 'failed', 'removed') DEFAULT 'pending',"
-			+ "reason VARCHAR(100) DEFAULT ''"
+			+ "reason VARCHAR(100) DEFAULT '',"
 			+ "size BIGINT DEFAULT '0',"
 			+ "hit INT DEFAULT '0',"
 			+ "retrieveURL VARCHAR(40) DEFAULT '',"// should only contains filename
