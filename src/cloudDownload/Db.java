@@ -101,7 +101,8 @@ public class Db {
 
 			if (rs.next()) {
 				info.id = rs.getInt("id");
-				if (rs.getString("state").equals("removed")) {
+				if (rs.getString("state").equals("removed") ||
+						rs.getString("state").equals("failed")) {
 					info.isNew = true;
 					PreparedStatement pst2 = con.prepareStatement("UPDATE " + tableName + " SET state = 'pending' where id = ?");
 					pst2.setInt(1, info.id);
