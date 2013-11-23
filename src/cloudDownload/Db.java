@@ -28,7 +28,7 @@ public class Db {
 			+ "reason VARCHAR(100) DEFAULT '',"
 			+ "size BIGINT DEFAULT '0',"
 			+ "hit INT DEFAULT '0',"
-			+ "retrieveURL VARCHAR(40) DEFAULT '',"// should only contains filename
+			+ "retrieveURL VARCHAR(50) DEFAULT '',"// should only contains filename
 			+ "PRIMARY KEY (id)" + ");";
 
 	public static class Task {
@@ -60,6 +60,7 @@ public class Db {
 		stm.addBatch(createDb);
 		stm.addBatch(useDb);
 		stm.addBatch(createTable);
+		stm.addBatch("update " + tableName + " set state = 'removed'");//remove all the file
 		stm.executeBatch();
 	}
 
@@ -179,22 +180,14 @@ public class Db {
 		pst.executeUpdate();
 	}
 
-	public static String retrieve(int id) throws SQLException {
+	public static String retrieve(String retrieveURL) throws SQLException {
 		// update hit and get retrieveURL, return "" if removed
 		Connection con = DriverManager.getConnection(dbUrl, user, password);
 
-		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET hit = hit + 1 where id = ?");
-		pst.setInt(1, id);
+		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET hit = hit + 1 where retrieveURL = ?");
+		pst.setString(1, retrieveURL);
 		pst.executeUpdate();
-
-		pst = con.prepareStatement("SELECT retrieveURL FROM " + tableName + " WHERE id = ?");
-		pst.setInt(1, id);
-		ResultSet rs = pst.executeQuery();
-
-		if (rs.next())
-			return rs.getString("retrieveURL");
-		else
-			return "";
+		return retrieveURL;
 	}
 
 	public static long sumSize() throws SQLException {

@@ -14,7 +14,7 @@ public class HTTPDownloader extends Downloader {
 	}
 
 	@Override
-	public File doDownload() throws Exception {
+	public DownloadInfo doDownload() throws Exception {
 		File tmpFile = File.createTempFile("cloud", ".tmp", new File("."));
 		tmpFile.delete();
 		Process p = Runtime.getRuntime().exec(
@@ -43,6 +43,6 @@ public class HTTPDownloader extends Downloader {
 		p.waitFor();
 		if (p.exitValue() != 0)
 			throw new Exception("HTTPDownload failed, URL is " + uri.toString());
-		return tmpFile;
+		return new DownloadInfo(tmpFile, Utils.retrieveExt(uri.toString()));
 	}
 }

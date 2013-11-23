@@ -88,6 +88,13 @@ public class Utils {
 		out.close();
 
 		oldFile.delete();
+	}
 
+	public static String retrieveExt(String url) throws Exception {
+		int index = url.lastIndexOf(".");
+		if (index == -1)
+			return "";
+		else
+			return url.substring(index);
 	}
 }

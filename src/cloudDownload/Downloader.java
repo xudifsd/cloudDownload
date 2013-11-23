@@ -15,20 +15,29 @@ public abstract class Downloader implements Runnable {
 	protected URI uri;
 	protected CloudCache cc;
 
+	static class DownloadInfo {
+		public File file;
+		public String ext;
+		public DownloadInfo(File f, String e) {
+			file = f;
+			ext = e;
+		}
+	}
+
 	public Downloader(int id, URI uri, CloudCache cc) {
 		this.id = id;
 		this.uri = uri;
 		this.cc = cc;
 	}
 
-	public abstract File doDownload() throws Exception ;// method should update progress periodically
+	public abstract DownloadInfo doDownload() throws Exception ;// method should update progress periodically
 
 	public void run() {
 		try {
 			startDownload(id);
-			File file = doDownload();
-			CopyInfo info = cc.copyToCC(file);
-			finishDownload(id, info.retrieveUrl, info.size);
+			DownloadInfo info = doDownload();
+			CopyInfo cinfo = cc.copyToCC(info);
+			finishDownload(id, cinfo.retrieveUrl, cinfo.size);
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			try {

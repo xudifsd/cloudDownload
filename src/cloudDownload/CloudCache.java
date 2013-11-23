@@ -9,6 +9,7 @@ import static cloudDownload.Db.sumSize;
 import static cloudDownload.Utils.getMD5Checksum;
 import static cloudDownload.Utils.zipIt;
 import cloudDownload.Db;
+import cloudDownload.Downloader.DownloadInfo;
 
 public class CloudCache {
 	private long sizeThreshold;
@@ -45,20 +46,21 @@ public class CloudCache {
 		}
 	}
 
-	public synchronized CopyInfo copyToCC(File file) throws Exception {
+	public synchronized CopyInfo copyToCC(DownloadInfo info) throws Exception {
 		// we don't update retrieve URL in db, it's the job of Downloader
-		if (file.isDirectory()) {
-			zipIt(uniqName, file.getAbsolutePath());
-			file = new File(uniqName);
+		if (info.file.isDirectory()) {
+			zipIt(uniqName, info.file.getAbsolutePath());
+			info.file = new File(uniqName);
+			info.ext = ".zip";
 		}
 
-		long size = file.length();
+		long size = info.file.length();
 		if (size + actualSize > sizeThreshold)
 			freeDisk(size - (sizeThreshold - actualSize));//only free necessary disk
 
-		String md5 = getMD5Checksum(file.getAbsolutePath());
+		String md5 = getMD5Checksum(info.file.getAbsolutePath());
 
-		Utils.moveFile(file.getAbsolutePath(), Config.fileContainer + md5);
-		return new CopyInfo(md5, size);
+		Utils.moveFile(info.file.getAbsolutePath(), Config.fileContainer + md5 + info.ext);
+		return new CopyInfo(md5 + info.ext, size);
 	}
 }
