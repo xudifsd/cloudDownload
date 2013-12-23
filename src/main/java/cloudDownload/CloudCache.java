@@ -12,8 +12,8 @@ import cloudDownload.Db;
 import cloudDownload.Downloader.DownloadInfo;
 
 public class CloudCache {
-	private long sizeThreshold;
-	private long actualSize;
+	public long sizeThreshold;
+	public long actualSize;
 	private final static String uniqName = "this_must_be_uniq";
 
 	public static class CopyInfo {
@@ -55,8 +55,10 @@ public class CloudCache {
 		}
 
 		long size = info.file.length();
-		if (size + actualSize > sizeThreshold)
+		if (size + actualSize > sizeThreshold) {
+			System.out.format("size = %d, actualSize = %d, sizeThreshold = %d\n", size, actualSize, sizeThreshold);
 			freeDisk(size - (sizeThreshold - actualSize));//only free necessary disk
+		}
 
 		String md5 = getMD5Checksum(info.file.getAbsolutePath());
 

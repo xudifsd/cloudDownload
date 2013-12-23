@@ -60,7 +60,7 @@ public class Db {
 		stm.addBatch(createDb);
 		stm.addBatch(useDb);
 		stm.addBatch(createTable);
-		stm.addBatch("update " + tableName + " set state = 'removed'");//remove all the file
+		stm.addBatch("UPDATE " + tableName + " SET state = 'removed', size = 0");//remove all the file
 		stm.executeBatch();
 	}
 

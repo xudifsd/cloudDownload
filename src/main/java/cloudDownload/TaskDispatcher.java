@@ -13,7 +13,7 @@ public class TaskDispatcher {
 	public TaskDispatcher(int numWorker) throws Exception {
 		this.pool = new ScheduledThreadPoolExecutor(numWorker);
 		Utils.initSystem();
-		this.cc = new CloudCache(2 * 1024 * 1024);
+		this.cc = new CloudCache(2l * 1024 * 1024 * 1024); //2G
 	}
 
 	public int newDownload(String URL) throws Exception {
