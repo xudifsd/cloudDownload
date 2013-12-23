@@ -10,14 +10,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Db {
-	private final static String initUrl = "jdbc:mysql://localhost:3306";
-	private final static String dbName = "cloudDownload";
-	private final static String dbUrl = initUrl + "/" + dbName;
+	private static String dbUrl;
 	private final static String tableName = "tasks";
-	private final static String user = "root";
-	private final static String password = "root";
-	private final static String createDb = "CREATE DATABASE IF NOT EXISTS " + dbName + ";";
-	private final static String useDb = "USE " + dbName + ";";
+	private static String createDb;
+	private static String useDb;
 	// TODO should add 'reason' column
 	private final static String createTable =
 			"CREATE TABLE IF NOT EXISTS " + tableName + " ("
@@ -55,7 +51,11 @@ public class Db {
 	public enum State {pending, downloading, succeeded, failed, removed};
 
 	public static void initDb() throws SQLException {
-		Connection con = DriverManager.getConnection(initUrl, user, password);
+		dbUrl = Config.initUrl + "/" + Config.dbName;
+		createDb = "CREATE DATABASE IF NOT EXISTS " + Config.dbName + ";";
+		useDb = "USE " + Config.dbName + ";";
+
+		Connection con = DriverManager.getConnection(Config.initUrl, Config.user, Config.password);
 		Statement stm = con.createStatement();
 		stm.addBatch(createDb);
 		stm.addBatch(useDb);
@@ -66,7 +66,7 @@ public class Db {
 
 	public static Task getTask(int id) throws SQLException {
 		Task result = new Task();
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("SELECT * FROM " + tableName + " WHERE id = ?");
 		pst.setInt(1, id);
@@ -91,7 +91,7 @@ public class Db {
 		TaskInfo info = new TaskInfo();
 		info.isNew = false;
 		taskUrl = taskUrl.trim();
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		while (true) {
 			// this is very inefficient, but very simple to understand
@@ -120,7 +120,7 @@ public class Db {
 	}
 
 	public static void updateProgress(int id, int progress) throws SQLException {
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET progress = ? where id = ?");
 		pst.setInt(1, progress);
@@ -129,7 +129,7 @@ public class Db {
 	}
 
 	public static void changeState(int id, State state, String reason) throws SQLException {
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET state = ?, reason = ? where id = ?");
 		pst.setString(1, state.toString());
@@ -139,7 +139,7 @@ public class Db {
 	}
 
 	public static void emptyTask(int id) throws SQLException {
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET state = ?, size = 0, retrieveURL = '' where id = ?");
 		pst.setString(1, "removed");
@@ -149,7 +149,7 @@ public class Db {
 
 	public static List<RemovalInfo> gatherRemovalInfo(long sizeToFree) throws SQLException {
 		LinkedList<RemovalInfo> result = new LinkedList<RemovalInfo>();
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("SELECT id, retrieveURL, size FROM " + tableName + " where "
 				+ "size > 0 && state = 'succeeded' && retrieveURL != ''");
@@ -172,7 +172,7 @@ public class Db {
 
 	public static void finishDownload(int id, String retrieveUrl, long size) throws SQLException {
 		changeState(id, State.succeeded, "");
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET retrieveURL = ?, size = ? where id = ?");
 		pst.setString(1, retrieveUrl);
@@ -183,7 +183,7 @@ public class Db {
 
 	public static String retrieve(String retrieveURL) throws SQLException {
 		// update hit and get retrieveURL, return "" if removed
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET hit = hit + 1 where retrieveURL = ?");
 		pst.setString(1, retrieveURL);
@@ -193,7 +193,7 @@ public class Db {
 
 	public static long sumSize() throws SQLException {
 		long result = 0;
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("SELECT size FROM " + tableName + " where size > 0");
 		ResultSet rs = pst.executeQuery();
@@ -205,7 +205,7 @@ public class Db {
 
 	public static void penalizeHit() throws SQLException {
 		// minus hit of all tasks
-		Connection con = DriverManager.getConnection(dbUrl, user, password);
+		Connection con = DriverManager.getConnection(dbUrl, Config.user, Config.password);
 
 		PreparedStatement pst = con.prepareStatement("UPDATE " + tableName + " SET hit = hit - 1 where hit > 0");
 		pst.executeUpdate();
